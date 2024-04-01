@@ -18,7 +18,6 @@ nextflow.enable.dsl = 2
 include { CAGANALYZER  } from './workflows/caganalyzer/main'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_caganalyzer_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_caganalyzer_pipeline'
-
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_caganalyzer_pipeline'
 
 /*

@@ -27,6 +27,20 @@
                 "pattern": "^\\S+\\.f(ast)?q\\.gz$",
                 "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
             },
+            "fna": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.f(a|asta|na|as)?\\.gz$",
+                "errorMessage": "Nucleotide FASTA file must be provided, cannot contain spaces and must have extension '.fa.gz', '.fasta.gz', '.fna.gz', or '.fas.gz'"
+            },
+            "faa": {
+                "type": "string",
+                "format": "file-path",
+                "exists": false,
+                "pattern": "^\\S+\\.f(a|asta|aa|as)?\\.gz$",
+                "errorMessage": "Protein FASTA file must be provided, cannot contain spaces and must have extension '.fa.gz', '.fasta.gz', '.faa.gz', or '.fas.gz'"
+            },
             "binary": {
                 "type": "integer",
                 "minimum": 0,

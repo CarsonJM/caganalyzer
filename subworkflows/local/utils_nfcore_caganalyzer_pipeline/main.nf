@@ -83,7 +83,7 @@ workflow PIPELINE_INITIALISATION {
     Channel
         .fromSamplesheet("input")
         .map {
-            meta, fastq_1, fastq_2 ->
+            meta, fastq_1, fastq_2, fna, faa ->
                 if (!fastq_2) {
                     return [ meta.id, meta + [ single_end:true ], [ fastq_1 ] ]
                 } else {
@@ -95,8 +95,8 @@ workflow PIPELINE_INITIALISATION {
             validateInputSamplesheet(it)
         }
         .map {
-            meta, fastqs ->
-                return [ meta, fastqs.flatten() ]
+            meta, fastqs, fna, faa ->
+                return [ meta, fastqs.flatten(), fna, faa ]
         }
         .set { ch_samplesheet }
 
