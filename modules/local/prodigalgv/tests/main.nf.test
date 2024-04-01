@@ -1,0 +1,101 @@
+nextflow_process {
+
+    name "Test Process PRODIGALGV"
+    script "../main.nf"
+    process "PRODIGALGV"
+
+    tag "modules"
+    tag "modules_local"
+    tag "prodigalgv"
+
+    test("prodigalgv - sarscov2 - gff") {
+        when {
+            process {
+                """
+                input[0] = [
+                    [id:'test', single_end:false ], // meta map
+                    file(params.test_data['sarscov2']['genome']['genome_fasta'], checkIfExists: true)
+                ]
+                input[1] =  'gff'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("prodigalgv - sarscov2 - gbk") {
+        when {
+            process {
+                """
+                input[0] = [
+                    [id:'test', single_end:false ], // meta map
+                    file(params.test_data['sarscov2']['genome']['genome_fasta'], checkIfExists: true)
+                ]
+                input[1] =  'gbk'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("prodigalgv - sarscov2 - gff - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [id:'test', single_end:false ], // meta map
+                    file(params.test_data['sarscov2']['genome']['genome_fasta'], checkIfExists: true)
+                ]
+                input[1] =  'gff'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.out).match() }
+            )
+        }
+    }
+
+    test("prodigalgv - sarscov2 - gbk - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [id:'test', single_end:false ], // meta map
+                    file(params.test_data['sarscov2']['genome']['genome_fasta'], checkIfExists: true)
+                ]
+                input[1] =  'gbk'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.out).match() }
+            )
+        }
+    }
+
+}

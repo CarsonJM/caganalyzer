@@ -1,15 +1,38 @@
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
+    IMPORT NF-CORE MODULES/FUNCTIONS/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FASTQC                 } from '../modules/nf-core/fastqc/main'
-include { MULTIQC                } from '../modules/nf-core/multiqc/main'
+//
+// FUNCTIONS: Imported from nf-core plugins
+//
 include { paramsSummaryMap       } from 'plugin/nf-validation'
-include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_caganalyzer_pipeline'
+
+//
+// MODULES: Imported from nf-core/modules
+//
+include { FASTQC                } from '../../modules/nf-core/fastqc/main'
+include { PRODIGAL              } from '../../modules/nf-core/prodigal/main'
+include { METAEUK_EASYPREDICT   } from '../../modules/nf-core/metaeuk/easypredict/main'
+include { MULTIQC               } from '../../modules/nf-core/multiqc/main'
+
+//
+// SUBWORKFLOWS: Imported from nf-core/modules
+//
+include { paramsSummaryMultiqc   } from '../../subworkflows/nf-core/utils_nfcore_pipeline'
+include { softwareVersionsToYAML } from '../../subworkflows/nf-core/utils_nfcore_pipeline'
+include { methodsDescriptionText } from '../../subworkflows/local/utils_nfcore_caganalyzer_pipeline'
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT LOCAL MODULES/SUBWORKFLOWS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+//
+// MODULES: Local modules
+//
+include { PRODIGALGV    } from '../../modules/nf-core/prodigalgv/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,13 +51,58 @@ workflow CAGANALYZER {
     ch_multiqc_files = Channel.empty()
 
     //
-    // MODULE: Run FastQC
+    // extract relevant files from samplesheet
+    //
+    ch_fastq    = ch_samplesheet.map { it[0], it[1] }
+    ch_fna      = ch_samplesheet.map { it[0], it[2] }
+    ch_faa      = ch_samplesheet.map { it[0], it[3] }
+
+
+    /*
+    ------------------------------------------------------------------------------
+        Read quality assessment
+    ------------------------------------------------------------------------------
+    */
+    //
+    // MODULE: Quality assess input reads
     //
     FASTQC (
-        ch_samplesheet
+        ch_fastq
     )
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+
+
+    /*
+    ------------------------------------------------------------------------------
+        OPTIONAL: Gene prediction
+    ------------------------------------------------------------------------------
+    */
+    // if params.gene_prediction == "prodigal", use prodigal
+    if ( params.gene_prediction_tool == "prodigal" ) {
+        //
+        // MODULE: Predict genes for input nucleotide sequences using Prodigal (default)
+        //
+        ch_gene_predictions_gff = PRODIGAL ( ch_fna, "gff" ).out.gene_annotations
+        ch_versions = ch_versions.mix(PRODIGAL.out.versions.first())
+    } else if ( params.gene_prediction_tool == "prodigal-gv" ) {
+        //
+        // MODULE: Predict genes for input nucleotide sequences using Prodigal-gv (for viruses/phages)
+        //
+        ch_gene_predictions_gff = PRODIGALGV ( ch_fna, "gff" ).out.gene_annotations
+        ch_versions = ch_versions.mix(PRODIGALGV.out.versions.first())
+    } else if ( params.gene_prediction_tool == "metaeuk") {
+        //
+        // MODULE: Predict genes for input nucleotide sequences using metaEuk (for eukaryotes)
+        //
+        ch_gene_predictions_gff = METAEUK_EASYPREDICT ( ch_fna, "gff" ).out.gff
+        ch_versions = ch_versions.mix(METAEUK_EASYPREDICT.out.versions.first())
+    }
+
+
+
+
+
 
     //
     // Collate and save software versions
